@@ -1,26 +1,17 @@
-from datetime import datetime
-from typing import Annotated
 from contextlib import asynccontextmanager
-from starlette.background import BackgroundTask
-from fastapi import FastAPI, HTTPException, Request, Response, Depends
-from pydantic import ValidationError
-from sqlmodel import Session, SQLModel
+from fastapi import FastAPI
+from sqlmodel import SQLModel
 
 from sqlalchemy.orm import sessionmaker
 
-from models import LogModel
 from queries import average_task_duration
 from middlewares import LogggingMiddleware
 from db import orc_create_conn_pool, pg_create_engine
 
 
 
-def create_db_and_tables(eng):
+def create_db_and_tables(eng) -> None:
     SQLModel.metadata.create_all(eng)
-
-
-
-
 
 
 @asynccontextmanager
@@ -46,7 +37,6 @@ async def root() -> dict:
 
 
 # Available endpoints
-
 @app.get("/average_task_duration/employee_id={employee_id}")
 async def get_average_task_duration(employee_id) -> list:
     async with app.state.orc_connection.acquire() as connection:

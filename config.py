@@ -6,9 +6,10 @@ class Settings(BaseSettings):
     DATE_FORMAT :str
     ORC_USERNAME : str
     ORC_PASSWORD : str
-
+    
     model_config = SettingsConfigDict(
-        env_file = ".env"
+        env_file = ".env",
+        extra="allow"
     )
 
 

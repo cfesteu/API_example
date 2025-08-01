@@ -1,0 +1,29 @@
+
+services:
+  api:
+    build: .
+    depends_on:
+      - db
+    ports: 
+      - "8000:8000"
+
+    environment:
+      - POSTGRES_URL=${POSTGRES_URL}
+      - ORC_USERNAME=${ORC_USERNAME}
+      - ORC_PASSWORD=${ORC_PASSWORD}
+      - DATE_FORMAT=${DATE_FORMAT}
+    network_mode: "host"
+
+  db:
+    image: postgres:latest
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${PG_USER}
+      - POSTGRES_PASSWORD=${PG_PASSWORD}
+
+    network_mode: "host"
+volumes:
+  postgres_data:

@@ -1,26 +1,20 @@
-import random
 
 from fastapi import Request
 from datetime import datetime
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 from starlette.background import BackgroundTask
-from sqlalchemy.orm import sessionmaker
-from sqlmodel import Session
 from models import LogModel
 
 
-
-
-def add_to_db(model, session_local):
-    session = session_local()
-    session.add(model)
-    session.commit()
-    return 
-
-
 class LogggingMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
+    
+    def add_to_db(self, model, session_local) -> None:
+        session = session_local()
+        session.add(model)
+        session.commit()
+
+    async def dispatch(self, request: Request, call_next) -> Response:
 
         session_local = request.app.state.session_maker
 
@@ -43,7 +37,7 @@ class LogggingMiddleware(BaseHTTPMiddleware):
                 time_elapsed=(end_time - start_time).total_seconds()
         )
 
-        background_task = BackgroundTask(add_to_db, log_obj, session_local)
+        background_task = BackgroundTask(self.add_to_db, log_obj, session_local)
         return Response(
             content=response_body,
             status_code=response.status_code,

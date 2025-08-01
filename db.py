@@ -1,13 +1,11 @@
 
-import os
 import oracledb
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, AsyncSession
-from sqlmodel import Session, SQLModel, create_engine
-
+from sqlmodel import create_engine
+from sqlalchemy import Engine
 from config import settings
 
 
-def pg_create_engine():
+def pg_create_engine() -> Engine:
     return create_engine(
         url=settings.POSTGRES_URL,
         echo=False,
