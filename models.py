@@ -2,10 +2,10 @@
 from datetime import datetime 
 from sqlmodel import Field, Session, SQLModel
 from pydantic import field_validator
-from config import DATE_FORMAT
+from config import settings
 
 class LogModel(SQLModel, table=True):
-    id: int = Field(primary_key=True)
+    id: int = Field(default=None, primary_key=True)
     url: str 
     method: str 
     response: str 
@@ -17,4 +17,4 @@ class LogModel(SQLModel, table=True):
     @field_validator('start_time', 'end_time')
     @classmethod
     def validate(cls, dt: datetime) -> str:
-        return dt.strftime(DATE_FORMAT)
+        return dt.strftime(settings.DATE_FORMAT)

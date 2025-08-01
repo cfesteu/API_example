@@ -1,82 +1,42 @@
-import os
-import json
-from os.path import join, dirname
-from uuid import uuid4
-from dotenv import load_dotenv
 from datetime import datetime
-from oracledb import create_pool_async, AsyncConnectionPool
+from typing import Annotated
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, Request, Response
+from starlette.background import BackgroundTask
+from fastapi import FastAPI, HTTPException, Request, Response, Depends
 from pydantic import ValidationError
+from sqlmodel import Session, SQLModel
+
+from sqlalchemy.orm import sessionmaker
 
 from models import LogModel
 from queries import average_task_duration
+from middlewares import LogggingMiddleware
+from db import orc_create_conn_pool, pg_create_engine
 
 
 
-dotenv_path = join(dirname(__file__), '.env')
-load_dotenv(dotenv_path)
-
-USER = os.environ.get("USERNAME")
-PSWD = os.environ.get("PASSWORD")
-
-
-#TO DO TODAY: implement the log functionality and containerize the application
+def create_db_and_tables(eng):
+    SQLModel.metadata.create_all(eng)
 
 
 
-#The middleware will serialize the information of interest as an entry in a table from another database
-# I will try experimenting with a SQLite database in order to have a three-services 
 
-def create_conn_pool() -> AsyncConnectionPool:
-    return create_pool_async(
-            user=USER,
-            password=PSWD,
-            host="localhost",
-            port=1521,
-            service_name="xepdb1" 
-        )
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.connection = create_conn_pool()
+    app.state.orc_connection = orc_create_conn_pool()
+    app.state.engine = pg_create_engine()
+    create_db_and_tables(app.state.engine)
+    app.state.session_maker = sessionmaker(autocommit=False, autoflush=False, bind=app.state.engine)
     yield
-
+    
 
 
 app = FastAPI(lifespan=lifespan)
+app.add_middleware(LogggingMiddleware)
 
-@app.middleware("http")
-async def log_middleware(request: Request, call_next):
 
-    start_time = datetime.now()
-    response = await call_next(request)
-    end_time = datetime.now()
-   
-
-    response_body = b""    
-    async for chunk in response.body_iterator:
-        response_body += chunk
-
-    log_obj = LogModel(
-            id=str(uuid4()),
-            url=request.url.path,
-            method=request.method,
-            response=response_body,
-            ip_address=request.client.host,
-            start_time=start_time,
-            end_time=end_time,
-            time_elapsed=(end_time - start_time).total_seconds()
-        )
-
-    # Define a background task that would write the model to a database
-    return Response(
-        content=response_body,
-        status_code=response.status_code,
-        headers=dict(response.headers),
-        media_type=response.media_type
-    )
 
 @app.get("/")
 async def root() -> dict:
@@ -89,7 +49,7 @@ async def root() -> dict:
 
 @app.get("/average_task_duration/employee_id={employee_id}")
 async def get_average_task_duration(employee_id) -> list:
-    async with app.state.connection.acquire() as connection:
+    async with app.state.orc_connection.acquire() as connection:
         with connection.cursor() as cursor:
             await cursor.execute(average_task_duration, emp_id=int(employee_id))
             formatted_result = await parse_query_result(cursor)
