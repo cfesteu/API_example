@@ -17,7 +17,7 @@ def orc_create_conn_pool() -> oracledb.AsyncConnectionPool:
     return oracledb.create_pool_async(
             user=settings.ORC_USERNAME,
             password=settings.ORC_PASSWORD,
-            host="localhost",
+            host="source_db",
             port=1521,
             service_name="xepdb1" 
         )

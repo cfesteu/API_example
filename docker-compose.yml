@@ -3,7 +3,11 @@ services:
   api:
     build: .
     depends_on:
-      - db
+      source_db:
+        condition: service_healthy
+      db:
+        condition: service_started
+
     ports: 
       - "8000:8000"
 
@@ -12,18 +16,36 @@ services:
       - ORC_USERNAME=${ORC_USERNAME}
       - ORC_PASSWORD=${ORC_PASSWORD}
       - DATE_FORMAT=${DATE_FORMAT}
-    network_mode: "host"
+ 
+
+
+  source_db:
+    image: container-registry.oracle.com/database/express:latest
+    environment:
+      - ORACLE_SYS_PASSWORD=${ORACLE_SYS_PASSWORD}
+    ports:
+      - "1521:1521"
+    volumes:
+      - ./init_db:/opt/oracle/scripts/startup
+      - ./healthcheck.sh:/tmp/healthcheck.sh
+
+    healthcheck:
+      test: ["CMD-SHELL","/tmp/healthcheck.sh"]
+      interval: 60s
+      timeout: 30s
+      retries: 4
+      start_period: 90s
 
   db:
     image: postgres:latest
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     ports:
-      - "5432:5432"
+      - "5432:5432" 
     environment:
       - POSTGRES_USER=${PG_USER}
       - POSTGRES_PASSWORD=${PG_PASSWORD}
 
-    network_mode: "host"
 volumes:
   postgres_data:
+  
