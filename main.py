@@ -4,8 +4,8 @@ from sqlmodel import SQLModel
 
 from sqlalchemy.orm import sessionmaker
 
-from queries import average_task_duration
-from middlewares import LogggingMiddleware
+from queries import total_hours, average_task_duration
+from middlewares import LoggingMiddleware
 from db import orc_create_conn_pool, pg_create_engine
 
 
@@ -25,34 +25,34 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-app.add_middleware(LogggingMiddleware)
+app.add_middleware(LoggingMiddleware)
 
 
 
 @app.get("/")
 async def root() -> dict:
-    return {'available_endpoints': ['/average_task_duration/employee_id=?']}
+    return {'available_endpoints': ['/total_hour_duration/employee_id={employee_id}', '/average_task_duration/employee_id={employee_id}', ]}
 
 
 
 
 # Available endpoints
+@app.get("/total_hour_duration/employee_id={employee_id}")
+async def get_total_hours(employee_id) -> list:
+    async with app.state.orc_connection.acquire() as connection:
+        with connection.cursor() as cursor:
+            await cursor.execute(total_hours, emp_id=int(employee_id))
+            formatted_result = await parse_query_result(cursor)
+            return formatted_result
+        
+
 @app.get("/average_task_duration/employee_id={employee_id}")
-async def get_average_task_duration(employee_id) -> list:
+async def average_task_duration(employee_id) -> list:
     async with app.state.orc_connection.acquire() as connection:
         with connection.cursor() as cursor:
             await cursor.execute(average_task_duration, emp_id=int(employee_id))
             formatted_result = await parse_query_result(cursor)
             return formatted_result
-        
-
-
-
-
-
-
-
-
 
 
 

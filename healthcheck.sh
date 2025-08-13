@@ -1,8 +1,9 @@
-#!/usr/bin/env bash
+#!/bin/bash
+set -euo pipefail
 
-set -euo
 
-result=$(sqlplus -S -L target/'ACMflorin1975!'@//source_db:1521/XEPDB1 <<'EOF'
+
+result=$(sqlplus -S -L $ORC_USERNAME/"$ORC_PASSWORD"@//source_db:1521/XEPDB1 <<'EOF'
 WHENEVER SQLERROR EXIT 1
 SET PAGES 0 FEEDBACK OFF HEADING OFF
 SELECT COUNT(*) FROM target.fact_activity;

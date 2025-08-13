@@ -1,4 +1,4 @@
-average_task_duration = """
+total_hours = """
     select 
         de.first_name, 
         de.last_name, 
@@ -23,4 +23,22 @@ average_task_duration = """
         de.first_name,
         de.last_name,
         dd.department_id
+"""
+
+
+
+average_task_duration = """
+    select 
+        de.first_name,
+        de.last_name,
+        avg(f.duration_hours) as average_task_duration
+    from
+        target.fact_activity f
+        join target.dim_employee de
+        on f.employee_id = to_number(:emp_id)
+    where 
+        f.activity_type_id = 1
+    group by
+        de.first_name,
+        de.last_name;
 """

@@ -7,7 +7,7 @@ from starlette.background import BackgroundTask
 from models import LogModel
 
 
-class LogggingMiddleware(BaseHTTPMiddleware):
+class LoggingMiddleware(BaseHTTPMiddleware):
     
     def add_to_db(self, model, session_local) -> None:
         session = session_local()

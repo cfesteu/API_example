@@ -23,6 +23,8 @@ services:
     image: container-registry.oracle.com/database/express:latest
     environment:
       - ORACLE_SYS_PASSWORD=${ORACLE_SYS_PASSWORD}
+      - ORC_USERNAME=${ORC_USERNAME}
+      - ORC_PASSWORD=${ORC_PASSWORD}
     ports:
       - "1521:1521"
     volumes:

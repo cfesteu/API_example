@@ -10,3 +10,4 @@ wheels/
 .venv
 .env
 prototyping.py
+init_db/
